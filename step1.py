@@ -1,24 +1,32 @@
 import sqlite3
 import re
 
-def clean_text(text):
-    if text is None:
-        return ""
-    text = re.sub(r'<[^>]+>', '', text)
-    text = re.sub(r'_+', '', text)
-    return text.strip()
+def clean_text(teks):
+    if not teks: return ""
+    # Hapus tag HTML
+    teks = re.sub(r'<[^>]+>', '', teks)
+    # Hapus garis bawah atau pemisah
+    teks = re.sub(r'_+', '', teks)
+    return teks.strip()
 
 conn = sqlite3.connect('db.db')
 cursor = conn.cursor()
 
-cursor.execute("SELECT id, content FROM page WHERE id IN (2, 3, 4)")
-rows = cursor.fetchall()
-data = {row[0]: clean_text(row[1]) for row in rows}
+data = {}
+for i in [3, 4, 5]:
+    cursor.execute("SELECT content FROM page WHERE id = ?", (i,))
+    row = cursor.fetchone()
+    data[i] = clean_text(row[0]) if row else ""
+
+conn.close()
+
+output_text = f"""ID TARGET: 4
+[TEKS SEBELUMNYA]: {data[3]}
+[TEKS TARGET]: {data[4]}
+[TEKS SETELAHNYA]: {data[5]}
+"""
 
 with open('input_bersih.txt', 'w', encoding='utf-8') as f:
-    f.write("ID TARGET: 3\n")
-    f.write("[TEKS SEBELUMNYA]: " + data.get(2, "") + "\n")
-    f.write("[TEKS TARGET]: " + data.get(3, "") + "\n")
-    f.write("[TEKS SETELAHNYA]: " + data.get(4, "") + "\n")
+    f.write(output_text)
 
-print("Step 1 done. Saved to input_bersih.txt")
+print(output_text)
